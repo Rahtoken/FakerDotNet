@@ -1,8 +1,8 @@
-version: '{build}'
+version: '0.0.{build}-{branch}'
 image: Visual Studio 2017
 configuration: Release
 pull_requests:
-  do_not_increment_build_number: false
+  do_not_increment_build_number: true
 
 nuget:
   account_feed: false
@@ -12,21 +12,22 @@ nuget:
 cache:
   - packages -> **\packages.config
 
-install:
-  - ps: choco install gitversion.portable -pre -y
-
 assembly_info:
   patch: true
+  file: '**\AssemblyInfo.*'
+  assembly_version: '{version}'
+  assembly_file_version: '{version}'
+  assembly_informational_version: '{version}'
 
 before_build:
   - nuget restore FakerDotNet.sln
-  - ps: gitversion /l console /output buildserver /updateAssemblyInfo /b $env:APPVEYOR_REPO_BRANCH
 
 build:
+  verbosity: minimal
   project: FakerDotNet.sln
 
 after_build:
-  - cmd: nuget pack FakerDotNet.nuspec -Version "%GitVersion_NuGetVersion%" -Prop "target=%CONFIGURATION%"
+  - cmd: nuget pack FakerDotNet.nuspec -Version "%APPVEYOR_BUILD_VERSION%" -Prop "target=%CONFIGURATION%"
 
 after_test:
   - nuget install NUnit.ConsoleRunner -Version 3.6.1 -OutputDirectory tools
